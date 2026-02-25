@@ -9,7 +9,7 @@ if api_key == None:
 
 from google import genai
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import *
 
 client = genai.Client(api_key=api_key)
 
@@ -42,12 +42,22 @@ All paths you provide should be relative to the working directory. You do not ne
         print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-
+    function_results = []
     if response.function_calls == None:
         print(response.text)
     else:
         for item in response.function_calls:
-            print(f"Calling function: {item.name}({item.args})")
+            call_function_result = call_function(item, args.verbose)
+            if call_function_result.parts == []:
+                raise Exception
+            if call_function_result.parts[0].function_response == None:
+                raise Exception
+            if call_function_result.parts[0].function_response.response == None:
+                raise Exception
+            function_results.append(call_function_result.parts[0])
+            
+            if args.verbose == True:
+                print(f"-> {call_function_result.parts[0].function_response.response}")
 
 if __name__ == "__main__":
     main()
