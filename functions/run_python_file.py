@@ -53,6 +53,6 @@ schema_run_python_file = types.FunctionDeclaration(
                 description="A list of things"
             )
         },
-        required=["file_path", ]
+        required=["file_path"]
     ),
 )
