@@ -28,36 +28,42 @@ When a user asks a question or makes a request, make a function call plan. You c
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 """
-    response = client.models.generate_content(model='gemini-2.5-flash', 
-                                              contents=messages, 
-                                              config=types.GenerateContentConfig(
-                                                  tools=[available_functions],
-                                                  system_instruction=system_prompt,
-                                                  temperature=0)) #"Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum.")
-    
-    if response.usage_metadata == None:
-        raise RuntimeError("Failed API request: None response")
-    
-    if (args.verbose):
-        print(f"User prompt: {args.user_prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-    function_results = []
-    if response.function_calls == None:
-        print(response.text)
-    else:
-        for item in response.function_calls:
-            call_function_result = call_function(item, args.verbose)
-            if call_function_result.parts == []:
-                raise Exception
-            if call_function_result.parts[0].function_response == None:
-                raise Exception
-            if call_function_result.parts[0].function_response.response == None:
-                raise Exception
-            function_results.append(call_function_result.parts[0])
-            
-            if args.verbose == True:
-                print(f"-> {call_function_result.parts[0].function_response.response}")
 
+    for _ in range(20):
+        response = client.models.generate_content(model='gemini-2.5-flash', 
+                                                contents=messages, 
+                                                config=types.GenerateContentConfig(
+                                                    tools=[available_functions],
+                                                    system_instruction=system_prompt,
+                                                    temperature=0)) #"Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum.")
+        if response.candidates:
+            for item in response.candidates:
+                messages.append(item)
+        if response.usage_metadata == None:
+            raise RuntimeError("Failed API request: None response")
+        
+        if (args.verbose):
+            print(f"User prompt: {args.user_prompt}")
+            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+        function_results = []
+        if response.function_calls == None:
+            print(response.text)
+            break
+        else:
+            for item in response.function_calls:
+                call_function_result = call_function(item, args.verbose)
+                if call_function_result.parts == []:
+                    raise Exception
+                if call_function_result.parts[0].function_response == None:
+                    raise Exception
+                if call_function_result.parts[0].function_response.response == None:
+                    raise Exception
+                function_results.append(call_function_result.parts[0])
+                
+                if args.verbose == True:
+                    print(f"-> {call_function_result.parts[0].function_response.response}")
+        messages.append(types.Content(role="user", parts=function_results))
+    print("Max aiagent iterations reached.")
 if __name__ == "__main__":
     main()
