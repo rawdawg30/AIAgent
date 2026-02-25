@@ -1,4 +1,5 @@
 import os
+from google.genai import types
 #import sys
 #sys.path.append('../')
 
@@ -30,3 +31,17 @@ def get_file_content(working_directory, file_path):
     except Exception as e:
          return f"Error: {e}"
         
+schema_get_file_content = types.FunctionDeclaration(
+    name="get_file_content",
+    description="Returns a string containing the contents of the file specified",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="Name of file to get content from, relative to the working directory",
+            ),
+        },
+        required=["file_path"]
+    ),
+)
